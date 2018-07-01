@@ -17,6 +17,7 @@
     "light",
     "schedule",
     "scheduler",
+    "switch",
     "dusk",
     "dawn",
     "sunset",
@@ -33,6 +34,7 @@
   "node-red": {
     "nodes": {
       "light-scheduler": "light-scheduler.js",
+      "scheduler-switch": "scheduler-switch.js",
       "light-scheduler-settings": "light-scheduler-settings.js"
     }
   },
