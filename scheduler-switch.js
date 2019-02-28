@@ -61,6 +61,7 @@ module.exports = function(RED) {
                     newMsg.payload = RED.util.evaluateNodeProperty(node.offPayload, node.offPayloadType, node, newMsg);
             }
             
+            node.warn(`out:${out} - prevState:${node.prevState} - newPayload:${newMsg.payload} prevPayload:${node.prevPayload}`);
             // Only send anything if the state has changed.
             if(out!=node.prevState||newMsg.payload!==node.prevPayload)
             {
