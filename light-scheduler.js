@@ -75,7 +75,7 @@ module.exports = function(RED) {
 
 
     function evaluate() {      
-      // Handle override state, if any.
+      // Handle override state, if any.   
       if(node.override == 'stop') {
         node.status({fill: "gray", shape: "dot", text: 'Override: Stopped!'});        
         return;
@@ -95,7 +95,12 @@ module.exports = function(RED) {
       if(node.override == 'light-only')
         return setState(isItDark.isItDark(node));
 
-      // node.override == auto
+
+//if(node.override == 'auto')
+//        {
+//          return;
+//        }
+        // node.override == auto
       if(!matchEvent)
         return setState(false);
 

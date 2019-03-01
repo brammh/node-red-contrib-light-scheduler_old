@@ -15,9 +15,7 @@
             offPayload: {value:"OFF", validate: RED.validators.typedInput("offPayloadType")},
             offPayloadType: {value:"str"},
             showStatus: {value: true},
-            outputtype: {value: "outputtype.input"},
             onStart:{value:false},
-            onInput:{value:true},
             onStateChange:{value:false}
             },
         inputs:1,
@@ -206,39 +204,9 @@
         var duskdawn = $("#node-input-duskdawn").val();
         node.onlyWhenDark = (duskdawn == 'duskdawn.goldenhour');
           
-        node.outputtype = $("#node-input-outputtype").val();
-        switch (node.outputtype) {
-            case "outputtype.inputstatestart":
-                node.onInput=true;
-                node.onStateChange=true;
-                node.onStart=true;
-                break;
-            case "outputtype.inputstart":
-                node.onInput=true;
-                node.onStateChange=false;
-                node.onStart=true;
-                break;
-            case "outputtype.inputstate":
-                node.onInput=true;
-                node.onStateChange=true;
-                node.onStart=false;
-                break;
-            case "outputtype.input":
-                node.onInput=true;
-                node.onStateChange=false;
-                node.onStart=false;
-                break;
-            case "outputtype.statestart":
-                node.onInput=false;
-                node.onStateChange=true;
-                node.onStart=true;
-                break;
-            case "outputtype.state":
-                node.onInput=false;
-                node.onStateChange=true;
-                node.onStart=false;
-                break;
-        }
+        node.onStateChange = $("#node-input-onStateChange").val();
+        node.onStart = $("#node-input-onStart").val();
+
         delete window.calendar;
       },
 
@@ -250,7 +218,7 @@
 
     function disableOutputNodeContent()
     {
-        if(document.getElementById("node-input-outputtype").value == "outputtype.input") 
+        if((document.getElementById("node-input-onStateChange").value == false)&&(document.getElementById("node-input-onStart").value == false))
         {
             document.getElementById("node-input-topic").disabled = true;
             document.getElementById("node-input-onPayload").disabled = true;
@@ -300,16 +268,15 @@
                 <label for="node-input-showStatus" style="width: 70%;">Show sun elevation and scheduler state in status</label>
             </div>
             <div class="form-row">
-                <label for="node-input-outputtype"><i class="fa fa-play"></i> Output-Mode </label>
-                <select id="node-input-outputtype" onchange="disableOutputNodeContent()">
-                    <option value="outputtype.inputstatestart">onInput & onStateChange & onStart</option>
-                    <option value="outputtype.inputstart">onInput & onStart</option>
-                    <option value="outputtype.inputstate">onInput & onStateChange</option>
-                    <option value="outputtype.input">onInput</option>
-                    <option value="outputtype.statestart">onStateChange & onStart</option>
-                    <option value="outputtype.state">onStateChange</option>
-                    </select>
-                </div>
+              <label>&nbsp;</label>
+              <input type="checkbox" id="node-input-onStateChange" style="display: inline-block; width: auto; vertical-align: top;">
+              <label for="node-input-onStateChange" style="width: 70%;">Send message when (On/Off) state changes</label>
+            </div>
+            <div class="form-row">
+              <label>&nbsp;</label>
+              <input type="checkbox" id="node-input-onStart" style="display: inline-block; width: auto; vertical-align: top;">
+              <label for="node-input-onStart" style="width: 70%;">Send message when node starts or deploys</label>
+            </div>
             <div class="form-row">
             Content of the output msg for 'onStart & onStateChange' events:
             </div>
@@ -398,21 +365,21 @@
         </ul>
         <i>Please Note:</i> The override is runtime only and will revert to auto during deploy / restart.
         </p>
+        <p>Other messages will pass-through, and go to the on / off output depending on the schedule.</p>
       </dd>
     </dl>
   
     <h3>Output</h3>
     <dl class="message-properties">
       <dt>payload</dt>
-      <dd>The payload will be set according to the settings and will output either the ON or OFF payload depending on the set parameters.</dd>
+      <dd>The payload will by default be equal to the inputs payload, for start & state change events the output is set according to the settings and will output either the ON or OFF payload depending on the set parameters.</dd>
     </dl>
   
     The output setting can be either of:
     <ul>
-      <li>"when state changes" - Will only output a <code>msg</code> when the state changes. The state is evaluated on a minutely basis, so it can take up to a minute after deploy of a new configu before the output it triggered.</li>
-      <li>"when state changes + startup" - Will only output a <code>msg</code> when the state changes and directly after a deploy and a restart of node-red.</li>
-      <li>"minutely" - Will only output a <code>msg</code> on a minutely basis even if the state have not changed.</li>
-    </ul>
+      <li>"Passthrough + when state changes" - Will only output a <code>msg</code> when the state changes. The state is evaluated on a minutely basis, so it can take up to a minute after deploy of a new configu before the output it triggered.</li>
+      <li>"Passthrough + when state changes + startup" - Will only output a <code>msg</code> when the state changes and directly after a deploy and a restart of node-red.</li>
+     </ul>
   
     <h3>Dusk / Dawn</h3>
     The Dusk / Dawn setting can be either of:

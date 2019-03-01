@@ -23,7 +23,6 @@ module.exports = function(RED) {
         this.offPayload = config.offPayload;
         this.offPayloadType = config.offPayloadType;
         this.showStatus = config.showStatus | false;
-        this.outputtype = config.outputtype ? config.outputtype : 'outputtype.input';
         this.onStart = config.onStart | false;
         this.onInput = config.onInput | true;
         this.onStateChange = config.onStateChange | false;
@@ -61,17 +60,18 @@ module.exports = function(RED) {
                     newMsg.payload = RED.util.evaluateNodeProperty(node.offPayload, node.offPayloadType, node, newMsg);
             }
             
-            //Populate the previous states if they are not filled yet
-            if(node.prevState==null||node.prevPayload==null)
-            {
-                node.prevPayload = newMsg.payload;
-                node.prevState = out;
-            }
-            //FOR DEBUGGING DISABLE BELOW
-            //node.warn(`out:${out} - prevState:${node.prevState} - newPayload:${newMsg.payload} prevPayload:${node.prevPayload}`);
+            //FOR DEBUGGING
+            node.warn(`out:${out} - prevState:${node.prevState} - newPayload:${newMsg.payload} prevPayload:${node.prevPayload}`);
 
-            // Only send anything if the state has changed.
-            if(out!=node.prevState||newMsg.payload!==node.prevPayload)
+            //Populate the previous states if they are not filled yet
+            //if(node.prevState==null||node.prevPayload==null)
+            //{
+            //    node.prevPayload = newMsg.payload;
+            //    node.prevState = out;
+            //}
+            
+            //On initiate, and when a new message is there send it
+            if(((node.prevState==null||node.prevPayload==null))||(out!=node.prevState||newMsg.payload!==node.prevPayload))
             {
                 node.send(out?[newMsg,null]:[null,newMsg]);
                 node.prevPayload = newMsg.payload;
@@ -112,17 +112,15 @@ module.exports = function(RED) {
         }
 
         node.on('input', function(msg) {
-            if(node.onInput)
-            {
-                node.msg = msg;
-                evaluate();
-            }        
+            node.msg = msg;
+            evaluate();       
         });
 
         //Evaluate at the start (trigger node at start)
         if(node.onStart)
              evaluate();
 
+        //Check status every minute
         if(node.onStateChange)
             node.evalInterval = setInterval(evaluate, 60000);
     
