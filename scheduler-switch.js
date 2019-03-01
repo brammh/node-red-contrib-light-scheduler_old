@@ -59,24 +59,10 @@ module.exports = function(RED) {
                 else
                     newMsg.payload = RED.util.evaluateNodeProperty(node.offPayload, node.offPayloadType, node, newMsg);
             }
-            
-            //FOR DEBUGGING
-            node.warn(`out:${out} - prevState:${node.prevState} - newPayload:${newMsg.payload} prevPayload:${node.prevPayload}`);
+            node.send(out?[newMsg,null]:[null,newMsg]);
 
-            //Populate the previous states if they are not filled yet
-            //if(node.prevState==null||node.prevPayload==null)
-            //{
-            //    node.prevPayload = newMsg.payload;
-            //    node.prevState = out;
-            //}
-            
-            //On initiate, and when a new message is there send it
-            if(((node.prevState==null||node.prevPayload==null))||(out!=node.prevState||newMsg.payload!==node.prevPayload))
-            {
-                node.send(out?[newMsg,null]:[null,newMsg]);
-                node.prevPayload = newMsg.payload;
-                node.prevState = out;
-            }
+            //FOR DEBUGGING
+            //node.warn(`out:${out} - prevState:${node.prevState} - newPayload:${newMsg.payload} prevPayload:${node.prevPayload}`);
         }
       
         function evaluate() {        
@@ -87,42 +73,61 @@ module.exports = function(RED) {
             {
                 if(!node.onlyWhenDark)
                 {   //Schedule On, don't care about darkness
-                    setState(true);
                     node.status(node.showStatus?{fill:'green',shape:'dot',text:'On, match with schedule'}:{});
+                    return true;
                 }
                 else 
                 {   //Schedule On, check if it is dark
                     if (isItDark.isItDark(node))
                     {   //It's dark
-                        setState(true);
                         node.status(node.showStatus?{fill:'green',shape:'dot',text: 'On, ' +sunElevation}:{});
+                        return true;
                     }
                     else
                     {   //Schedule On, but it's not dark
-                        setState(false);
                         node.status(node.showStatus?{fill:'yellow',shape:'dot',text:'Match with schedule, not dark yet, '  +sunElevation}:{});
+                        return false;
                     }
                 } 
             }
-            else
-            {   //Schedule==Off -> Off
-                setState(false);
-                node.status(node.showStatus?{fill:'red',shape:'dot',text:'Off, no match with schedule'}:{});
+            //Schedule==Off -> Off
+            node.status(node.showStatus?{fill:'red',shape:'dot',text:'Off, no match with schedule'}:{});
+            return false;    
+        }
+
+        function stateWatcher(){
+            var newValue = evaluate();
+
+            //Send value if statuschanges should be reported, and value differs from previous
+            if(node.onStateChange)
+            {
+                if ((newValue!=node.prevState)&&(node.prevState!=null))
+                {
+                    //different status, send message
+                    setState(newValue);
+                }
+                node.prevState = newValue;
             }
         }
+        
+        function start()
+        {
+            setState(evaluate());
+        }       
 
         node.on('input', function(msg) {
             node.msg = msg;
-            evaluate();       
+            setState(evaluate());
         });
 
-        //Evaluate at the start (trigger node at start)
+        //evaluate at the start (trigger node at start)
         if(node.onStart)
-             evaluate();
+        {
+            setTimeout(start, 1000);
+        }
 
-        //Check status every minute
-        if(node.onStateChange)
-            node.evalInterval = setInterval(evaluate, 60000);
+        //Check status continiously, and update if state changed
+        node.evalInterval = setInterval(stateWatcher, 30000);
     
         node.on('close', function() {
             clearInterval(node.evalInterval);
